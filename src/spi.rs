@@ -3,11 +3,11 @@
 #[cfg(feature = "async")]
 use core::future::Future;
 #[cfg(feature = "sync")]
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 #[cfg(feature = "sync")]
 use embedded_hal::spi::SpiDevice;
 #[cfg(feature = "async")]
-use embedded_hal_async::delay::DelayUs as AsyncDelayUs;
+use embedded_hal_async::delay::DelayNs as AsyncDelayNs;
 #[cfg(feature = "async")]
 use embedded_hal_async::spi::{SpiBus as AsyncSpiBus, SpiDevice as AsyncSpiDevice};
 
@@ -45,7 +45,7 @@ pub struct AsyncBME280<SPI> {
             AsyncSpiDevice(sync = "SpiDevice"),
             AsyncSpiBus(sync = "SpiBus"),
             AsyncSPIInterface(sync = "SPIInterface"),
-            AsyncDelayUs(sync = "DelayUs"),
+            AsyncDelayNs(sync = "DelayNs"),
             AsyncBME280Common(sync = "BME280Common"),
         )
     ),
@@ -68,7 +68,7 @@ where
     /// Initializes the BME280.
     /// This configures 2x temperature oversampling, 16x pressure oversampling, and the IIR filter
     /// coefficient 16.
-    pub async fn init<D: AsyncDelayUs>(
+    pub async fn init<D: AsyncDelayNs>(
         &mut self,
         delay: &mut D,
     ) -> Result<(), Error<SPIError<SPIE>>> {
@@ -85,7 +85,7 @@ where
     }
 
     /// Initializes the BME280, applying the given configuration.
-    pub async fn init_with_config<D: AsyncDelayUs>(
+    pub async fn init_with_config<D: AsyncDelayNs>(
         &mut self,
         delay: &mut D,
         config: Configuration,
@@ -94,7 +94,7 @@ where
     }
 
     /// Captures and processes sensor data for temperature, pressure, and humidity
-    pub async fn measure<D: AsyncDelayUs>(
+    pub async fn measure<D: AsyncDelayNs>(
         &mut self,
         delay: &mut D,
     ) -> Result<Measurements<SPIError<SPIE>>, Error<SPIError<SPIE>>> {
