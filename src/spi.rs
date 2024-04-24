@@ -9,7 +9,7 @@ use embedded_hal::spi::SpiDevice;
 #[cfg(feature = "async")]
 use embedded_hal_async::delay::DelayNs as AsyncDelayNs;
 #[cfg(feature = "async")]
-use embedded_hal_async::spi::{SpiBus as AsyncSpiBus, SpiDevice as AsyncSpiDevice};
+use embedded_hal_async::spi::SpiDevice as AsyncSpiDevice;
 
 #[cfg(feature = "async")]
 use super::{AsyncBME280Common, AsyncInterface};
@@ -173,7 +173,7 @@ where
     type ReadRegisterFuture<'a> = impl Future<Output = Result<u8, Error<Self::Error>>>
     where
         SPI: 'a;
-    fn read_register<'a>(&'a mut self, register: u8) -> Self::ReadRegisterFuture<'a> {
+    fn read_register(&mut self, register: u8) -> Self::ReadRegisterFuture<'_> {
         async move {
             let mut result = [0u8];
             self.read_any_register(register, &mut result).await?;
@@ -184,7 +184,7 @@ where
     type ReadDataFuture<'a> = impl Future<Output = Result<[u8; BME280_P_T_H_DATA_LEN], Error<Self::Error>>>
     where
         SPI: 'a;
-    fn read_data<'a>(&'a mut self, register: u8) -> Self::ReadDataFuture<'a> {
+    fn read_data(&mut self, register: u8) -> Self::ReadDataFuture<'_> {
         async move {
             let mut data = [0; BME280_P_T_H_DATA_LEN];
             self.read_any_register(register, &mut data).await?;
@@ -195,7 +195,7 @@ where
     type ReadPtCalibDataFuture<'a> = impl Future<Output = Result<[u8; BME280_P_T_CALIB_DATA_LEN], Error<Self::Error>>>
     where
         SPI: 'a;
-    fn read_pt_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadPtCalibDataFuture<'a> {
+    fn read_pt_calib_data(&mut self, register: u8) -> Self::ReadPtCalibDataFuture<'_> {
         async move {
             let mut data = [0; BME280_P_T_CALIB_DATA_LEN];
             self.read_any_register(register, &mut data).await?;
@@ -206,7 +206,7 @@ where
     type ReadHCalibDataFuture<'a> = impl Future<Output = Result<[u8; BME280_H_CALIB_DATA_LEN], Error<Self::Error>>>
     where
         SPI: 'a;
-    fn read_h_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadHCalibDataFuture<'a> {
+    fn read_h_calib_data(&mut self, register: u8) -> Self::ReadHCalibDataFuture<'_> {
         async move {
             let mut data = [0; BME280_H_CALIB_DATA_LEN];
             self.read_any_register(register, &mut data).await?;
@@ -217,11 +217,7 @@ where
     type WriteRegisterFuture<'a> = impl Future<Output = Result<(), Error<Self::Error>>>
     where
         SPI: 'a;
-    fn write_register<'a>(
-        &'a mut self,
-        register: u8,
-        payload: u8,
-    ) -> Self::WriteRegisterFuture<'a> {
+    fn write_register(&mut self, register: u8, payload: u8) -> Self::WriteRegisterFuture<'_> {
         async move {
             // If the first bit is 0, the register is written.
             let transfer = [register & 0x7f, payload];

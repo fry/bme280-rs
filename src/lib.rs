@@ -20,8 +20,8 @@
 #![cfg_attr(not(feature = "with_std"), no_std)]
 #![cfg_attr(
     feature = "async",
-    feature(generic_associated_types),
-    feature(type_alias_impl_trait)
+    feature(type_alias_impl_trait),
+    feature(impl_trait_in_assoc_type)
 )]
 
 //! A platform agnostic Rust driver for the Bosch BME280 and BMP280, based on the
@@ -199,6 +199,7 @@ impl<T: fmt::Debug + fmt::Display> error::Error for Error<T> {}
 
 /// BME280 operating mode
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 pub enum SensorMode {
     /// Sleep mode
     Sleep,
@@ -212,6 +213,7 @@ pub enum SensorMode {
 /// See sections 3.4ff of the manual for measurement flow and recommended values.
 /// The default is 1x, i.e., no oversampling.
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 pub enum Oversampling {
     /// Disables oversampling.
     /// Without IIR filtering, this sets the resolution of temperature and pressure measurements
@@ -256,11 +258,13 @@ impl Default for Oversampling {
 /// Lowpass filter settings for pressure and temperature values.
 /// See section 3.4.4 of the datasheet for more information on this.
 /// The default setting is disabled.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 pub enum IIRFilter {
     /// Disables the IIR filter.
     /// The resolution of pressure and temperature measurements is dictated by their respective
     /// oversampling settings.
+    #[default]
     Off,
 
     /// Sets the IIR filter coefficient to 2.
@@ -290,15 +294,10 @@ impl IIRFilter {
     }
 }
 
-impl Default for IIRFilter {
-    fn default() -> Self {
-        IIRFilter::Off
-    }
-}
-
 /// Configuration values for the BME280 sensor.
 /// The default sets all oversampling settings to 1x and disables the IIR filter.
 #[derive(Debug, Copy, Clone, Default)]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 pub struct Configuration {
     temperature_oversampling: Oversampling,
     pressure_oversampling: Oversampling,
@@ -333,6 +332,7 @@ impl Configuration {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 struct CalibrationData {
     dig_t1: u16,
     dig_t2: i16,
@@ -357,6 +357,7 @@ struct CalibrationData {
 
 /// Measurement data
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "with_defmt", derive(defmt::Format))]
 #[derive(Debug)]
 pub struct Measurements<E> {
     /// temperature in degrees celsius
@@ -507,34 +508,33 @@ trait AsyncInterface {
     type ReadRegisterFuture<'a>: Future<Output = Result<u8, Error<Self::Error>>>
     where
         Self: 'a;
-    fn read_register<'a>(&'a mut self, register: u8) -> Self::ReadRegisterFuture<'a>;
+    fn read_register(&mut self, register: u8) -> Self::ReadRegisterFuture<'_>;
 
     type ReadDataFuture<'a>: Future<
         Output = Result<[u8; BME280_P_T_H_DATA_LEN], Error<Self::Error>>,
     >
     where
         Self: 'a;
-    fn read_data<'a>(&'a mut self, register: u8) -> Self::ReadDataFuture<'a>;
+    fn read_data(&mut self, register: u8) -> Self::ReadDataFuture<'_>;
 
     type ReadPtCalibDataFuture<'a>: Future<
         Output = Result<[u8; BME280_P_T_CALIB_DATA_LEN], Error<Self::Error>>,
     >
     where
         Self: 'a;
-    fn read_pt_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadPtCalibDataFuture<'a>;
+    fn read_pt_calib_data(&mut self, register: u8) -> Self::ReadPtCalibDataFuture<'_>;
 
     type ReadHCalibDataFuture<'a>: Future<
         Output = Result<[u8; BME280_H_CALIB_DATA_LEN], Error<Self::Error>>,
     >
     where
         Self: 'a;
-    fn read_h_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadHCalibDataFuture<'a>;
+    fn read_h_calib_data(&mut self, register: u8) -> Self::ReadHCalibDataFuture<'_>;
 
     type WriteRegisterFuture<'a>: Future<Output = Result<(), Error<Self::Error>>>
     where
         Self: 'a;
-    fn write_register<'a>(&'a mut self, register: u8, payload: u8)
-        -> Self::WriteRegisterFuture<'a>;
+    fn write_register(&mut self, register: u8, payload: u8) -> Self::WriteRegisterFuture<'_>;
 }
 
 /// Common driver code for I2C and SPI interfaces
@@ -688,7 +688,7 @@ where
         delay: &mut D,
     ) -> Result<Measurements<I::Error>, Error<I::Error>> {
         self.forced(delay).await?;
-        delay.delay_ms(40).await; // await measurement
+        delay.delay_ms(40).await;
         let measurements = self.interface.read_data(BME280_DATA_ADDR).await?;
         match self.calibration.as_mut() {
             Some(calibration) => {

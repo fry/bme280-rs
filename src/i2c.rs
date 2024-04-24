@@ -182,7 +182,7 @@ where
     type ReadRegisterFuture<'a> = impl Future<Output = Result<u8, Error<Self::Error>>>
     where
         I2C: 'a;
-    fn read_register<'a>(&'a mut self, register: u8) -> Self::ReadRegisterFuture<'a> {
+    fn read_register(&mut self, register: u8) -> Self::ReadRegisterFuture<'_> {
         async move {
             let mut data: [u8; 1] = [0];
             self.i2c
@@ -196,7 +196,7 @@ where
     type ReadDataFuture<'a> = impl Future<Output = Result<[u8; BME280_P_T_H_DATA_LEN], Error<Self::Error>>>
     where
         I2C: 'a;
-    fn read_data<'a>(&'a mut self, register: u8) -> Self::ReadDataFuture<'a> {
+    fn read_data(&mut self, register: u8) -> Self::ReadDataFuture<'_> {
         async move {
             let mut data = [0; BME280_P_T_H_DATA_LEN];
             self.i2c
@@ -210,7 +210,7 @@ where
     type ReadPtCalibDataFuture<'a> = impl Future<Output = Result<[u8; BME280_P_T_CALIB_DATA_LEN], Error<Self::Error>>>
     where
         I2C: 'a;
-    fn read_pt_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadPtCalibDataFuture<'a> {
+    fn read_pt_calib_data(&mut self, register: u8) -> Self::ReadPtCalibDataFuture<'_> {
         async move {
             let mut data = [0; BME280_P_T_CALIB_DATA_LEN];
             self.i2c
@@ -224,7 +224,7 @@ where
     type ReadHCalibDataFuture<'a> = impl Future<Output = Result<[u8; BME280_H_CALIB_DATA_LEN], Error<Self::Error>>>
     where
         I2C: 'a;
-    fn read_h_calib_data<'a>(&'a mut self, register: u8) -> Self::ReadHCalibDataFuture<'a> {
+    fn read_h_calib_data(&mut self, register: u8) -> Self::ReadHCalibDataFuture<'_> {
         async move {
             let mut data = [0; BME280_H_CALIB_DATA_LEN];
             self.i2c
@@ -238,11 +238,7 @@ where
     type WriteRegisterFuture<'a> = impl Future<Output = Result<(), Error<Self::Error>>>
     where
         I2C: 'a;
-    fn write_register<'a>(
-        &'a mut self,
-        register: u8,
-        payload: u8,
-    ) -> Self::WriteRegisterFuture<'a> {
+    fn write_register(&mut self, register: u8, payload: u8) -> Self::WriteRegisterFuture<'_> {
         async move {
             self.i2c
                 .write(self.address, &[register, payload])
